@@ -4,17 +4,27 @@
 
 :root {
   --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-hover: 221.2 83.2% 47.3%;
+  --foreground: 0 0% 0%;
+  --accent: 0 0% 95%;
+  --accent-hover: 0 0% 90%;
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
+}
+
+.dark {
+  --foreground-rgb: 255, 255, 255;
+  --background-rgb: 17, 24, 39;
 }
 
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
 }
 
+/* Sidebar Transitions */
 .fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -30,18 +40,49 @@ body {
   }
 }
 
+/* Smooth transitions */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.duration-200 {
+  transition-duration: 200ms;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
 .card {
   @apply bg-white rounded-lg shadow-md p-6 transition-all duration-300;
 }
 
 .button {
   @apply px-4 py-2 rounded-md transition-all duration-300 
-         bg-blue-500 text-white hover:bg-blue-600 
+         bg-black text-white hover:bg-gray-800 
          disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 .input {
   @apply px-4 py-2 rounded-md border border-gray-200 
-         focus:outline-none focus:ring-2 focus:ring-blue-500 
+         focus:outline-none focus:ring-2 focus:ring-black 
          transition-all duration-300;
+}
+
+.calendar-day {
+  @apply h-14 border border-gray-100 transition-all duration-200 
+         hover:bg-gray-50 flex items-center justify-center;
+}
+
+@layer base {
+  html {
+    @apply h-full;
+  }
+  body {
+    @apply h-full;
+  }
+  #__next {
+    @apply h-full;
+  }
 }
