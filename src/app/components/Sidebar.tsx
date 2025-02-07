@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { FiSun, FiMoon } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
 
 interface SidebarProps {
   userName?: {
@@ -16,6 +17,19 @@ interface SidebarProps {
 export default function Sidebar({ userName, userId }: SidebarProps) {
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <aside className="fixed left-0 top-0 h-full w-20 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center py-6 transition-colors duration-200">
+        {/* Loading state */}
+      </aside>
+    );
+  }
 
   return (
     <aside className="fixed left-0 top-0 h-full w-20 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center py-6 transition-colors duration-200">

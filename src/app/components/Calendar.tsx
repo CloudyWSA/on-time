@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import TimeEntryForm from './TimeEntryForm';
@@ -32,6 +32,19 @@ export default function Calendar({
   const { theme } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showForm, setShowForm] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="space-y-6 bg-gray-50 dark:bg-gray-900 p-4 rounded-lg transition-colors duration-200">
+        {/* Loading state */}
+      </div>
+    );
+  }
 
   // Convert filledDates to Set if it's an array
   const filledDatesSet = useMemo(() => {
@@ -135,7 +148,7 @@ export default function Calendar({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-gray-50 dark:bg-gray-900 p-4 rounded-lg transition-colors duration-200">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors duration-200">
         <div className="flex justify-between items-center mb-6">
           <button
@@ -167,14 +180,15 @@ export default function Calendar({
           {renderCalendarDays()}
         </div>
       </div>
-
       {showForm && selectedDate && (
-        <TimeEntryForm
-          selectedDate={selectedDate}
-          onSubmit={handleSaveEntry}
-          onCancel={handleCancelEntry}
-          existingEntry={entries[selectedDate.toISOString().split('T')[0]]}
-        />
+        <div className="fixed top-0 right-0 h-full w-96 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-200 overflow-y-auto">
+          <TimeEntryForm
+            selectedDate={selectedDate}
+            onSubmit={handleSaveEntry}
+            onCancel={handleCancelEntry}
+            existingEntry={entries[selectedDate.toISOString().split('T')[0]]}
+          />
+        </div>
       )}
     </div>
   );

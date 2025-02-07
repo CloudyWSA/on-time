@@ -34,6 +34,13 @@ export default function TimeEntryForm({ selectedDate, onSubmit, onCancel, existi
   const [exitTime, setExitTime] = useState('');
   const [currentTimebank, setCurrentTimebank] = useState<string>('+00:00');
   const [isPositive, setIsPositive] = useState(true);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Get current time in HH:mm format
+  const getCurrentTime = () => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  };
 
   // Load existing entry data if available
   useEffect(() => {
@@ -45,9 +52,42 @@ export default function TimeEntryForm({ selectedDate, onSubmit, onCancel, existi
     }
   }, [existingEntry]);
 
+  const validateTimes = () => {
+    const newErrors: Record<string, string> = {};
+    
+    // Convert times to comparable format
+    const times = {
+      entry: entryTime ? new Date(`1970-01-01T${entryTime}`) : null,
+      lunchStart: lunchStart ? new Date(`1970-01-01T${lunchStart}`) : null,
+      lunchEnd: lunchEnd ? new Date(`1970-01-01T${lunchEnd}`) : null,
+      exit: exitTime ? new Date(`1970-01-01T${exitTime}`) : null
+    };
+
+    // Validate chronological order if times are present
+    if (times.entry && times.lunchStart && times.entry >= times.lunchStart) {
+      newErrors.lunchStart = t('timeEntry.errors.lunchStartAfterEntry');
+    }
+    if (times.lunchStart && times.lunchEnd && times.lunchStart >= times.lunchEnd) {
+      newErrors.lunchEnd = t('timeEntry.errors.lunchEndAfterStart');
+    }
+    if (times.lunchEnd && times.exit && times.lunchEnd >= times.exit) {
+      newErrors.exit = t('timeEntry.errors.exitAfterLunch');
+    }
+    if (times.entry && times.exit && times.entry >= times.exit) {
+      newErrors.exit = t('timeEntry.errors.exitAfterEntry');
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDate) return;
+
+    if (!validateTimes()) {
+      return;
+    }
 
     const entry: TimeEntry = {
       entry_time: entryTime || null,
@@ -58,6 +98,25 @@ export default function TimeEntryForm({ selectedDate, onSubmit, onCancel, existi
     };
 
     onSubmit(entry);
+  };
+
+  const handleTimeInput = (field: string, value: string) => {
+    switch (field) {
+      case 'entry':
+        setEntryTime(value);
+        break;
+      case 'lunchStart':
+        setLunchStart(value);
+        break;
+      case 'lunchEnd':
+        setLunchEnd(value);
+        break;
+      case 'exit':
+        setExitTime(value);
+        break;
+    }
+    // Clear errors when user makes changes
+    setErrors({});
   };
 
   return (
@@ -75,7 +134,7 @@ export default function TimeEntryForm({ selectedDate, onSubmit, onCancel, existi
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {t('timeEntry.entryTime')}
@@ -83,21 +142,11 @@ export default function TimeEntryForm({ selectedDate, onSubmit, onCancel, existi
             <input
               type="time"
               value={entryTime}
-              onChange={(e) => setEntryTime(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200"
+              onChange={(e) => handleTimeInput('entry', e.target.value)}
+              placeholder={getCurrentTime()}
+              className={`w-full px-3 py-2 border ${errors.entry ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200`}
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('timeEntry.exitTime')}
-            </label>
-            <input
-              type="time"
-              value={exitTime}
-              onChange={(e) => setExitTime(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200"
-            />
+            {errors.entry && <p className="mt-1 text-sm text-red-500">{errors.entry}</p>}
           </div>
 
           <div>
@@ -107,9 +156,11 @@ export default function TimeEntryForm({ selectedDate, onSubmit, onCancel, existi
             <input
               type="time"
               value={lunchStart}
-              onChange={(e) => setLunchStart(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200"
+              onChange={(e) => handleTimeInput('lunchStart', e.target.value)}
+              placeholder={getCurrentTime()}
+              className={`w-full px-3 py-2 border ${errors.lunchStart ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200`}
             />
+            {errors.lunchStart && <p className="mt-1 text-sm text-red-500">{errors.lunchStart}</p>}
           </div>
 
           <div>
@@ -119,9 +170,25 @@ export default function TimeEntryForm({ selectedDate, onSubmit, onCancel, existi
             <input
               type="time"
               value={lunchEnd}
-              onChange={(e) => setLunchEnd(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200"
+              onChange={(e) => handleTimeInput('lunchEnd', e.target.value)}
+              placeholder={getCurrentTime()}
+              className={`w-full px-3 py-2 border ${errors.lunchEnd ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200`}
             />
+            {errors.lunchEnd && <p className="mt-1 text-sm text-red-500">{errors.lunchEnd}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('timeEntry.exitTime')}
+            </label>
+            <input
+              type="time"
+              value={exitTime}
+              onChange={(e) => handleTimeInput('exit', e.target.value)}
+              placeholder={getCurrentTime()}
+              className={`w-full px-3 py-2 border ${errors.exit ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200`}
+            />
+            {errors.exit && <p className="mt-1 text-sm text-red-500">{errors.exit}</p>}
           </div>
         </div>
 
